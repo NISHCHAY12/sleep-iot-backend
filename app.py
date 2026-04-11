@@ -11,7 +11,7 @@ firebase_key = json.loads(os.environ["FIREBASE_KEY"])
 cred = credentials.Certificate(firebase_key)
 
 firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://iot-project-72cfe-default-rtdb.firebaseio.com/'
+    'databaseURL': 'https://iot-project-72cfe-default-rtdb.asia-southeast1.firebasedatabase.app/'
 })
 
 app = Flask(__name__)
