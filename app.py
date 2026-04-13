@@ -4,8 +4,6 @@ import json
 import firebase_admin
 from firebase_admin import credentials, db
 
-
-
 firebase_key = json.loads(os.environ["FIREBASE_KEY"])
 
 cred = credentials.Certificate(firebase_key)
@@ -17,10 +15,9 @@ firebase_admin.initialize_app(cred, {
 app = Flask(__name__)
 
 BUFFER_SIZE = 60
-
 buffer = []
 
-
+# -------- AVERAGE --------
 def compute_average():
     if not buffer:
         return None
@@ -31,7 +28,8 @@ def compute_average():
         "light": 0,
         "air": 0,
         "sound": 0,
-        "motion": 0
+        "motion": 0,
+        "movement": 0   # 🔥 NEW
     }
 
     for d in buffer:
@@ -41,6 +39,7 @@ def compute_average():
         avg["air"] += d["air"]
         avg["sound"] += d["sound"]
         avg["motion"] += d["motion"]
+        avg["movement"] += d["movement"]  # 🔥 NEW
 
     count = len(buffer)
 
@@ -49,34 +48,39 @@ def compute_average():
 
     return avg
 
-
+# -------- SCORE --------
 def compute_score(current, avg):
     if avg is None:
         return 100
 
     score = 100
 
-    # Deviation-based scoring
+    # Existing factors
     score -= abs(current["temp"] - avg["temp"]) * 5
     score -= abs(current["light"] - avg["light"]) * 0.2
     score -= abs(current["sound"] - avg["sound"]) * 0.02
     score -= abs(current["air"] - avg["air"]) * 0.01
 
+    # 🔥 MOTION (binary)
     if current["motion"] == 1:
-        score -= 15
+        score -= 10
+
+    # 🔥 NEW: CONTINUOUS MOVEMENT PENALTY
+    movement_diff = abs(current["movement"] - avg["movement"])
+    score -= movement_diff * 50   # 🔥 very important weight
 
     return max(score, 0)
 
-
+# -------- ACTION --------
 def decide_action(score, current, avg):
     action = "NONE"
 
     if avg is None:
         return action
 
-    # Dynamic logic (not constant thresholds)
     dTemp = current["temp"] - avg["temp"]
     dSound = current["sound"] - avg["sound"]
+    dMove = current["movement"] - avg["movement"]
 
     if score < 60 and dTemp > 1.5:
         action = "AC_COOL"
@@ -84,15 +88,15 @@ def decide_action(score, current, avg):
     elif score < 60 and dSound > 500:
         action = "NOISE_ALERT"
 
+    elif score < 60 and dMove > 0.2:
+        action = "RESTLESS_SLEEP"   # 🔥 NEW
+
     return action
 
-
 # -------- ROUTES --------
-
 @app.route('/')
 def home():
     return "Flask Backend Running 🚀"
-
 
 @app.route('/data', methods=['POST'])
 def receive_data():
@@ -100,23 +104,25 @@ def receive_data():
 
     data = request.json
 
-    # ---- Validate ----
-    required_keys = ["temp", "humidity", "light", "air", "sound", "motion"]
+    # 🔥 UPDATED REQUIRED KEYS
+    required_keys = ["temp", "humidity", "light", "air", "sound", "motion", "movement"]
+
     for key in required_keys:
         if key not in data:
             return jsonify({"error": f"Missing {key}"}), 400
 
-    # ---- Store in buffer ----
+    # Store
     buffer.append(data)
 
     if len(buffer) > BUFFER_SIZE:
         buffer.pop(0)
 
-    # ---- Compute ----
+    # Compute
     avg = compute_average()
     score = compute_score(data, avg)
     action = decide_action(score, data, avg)
 
+    # Firebase
     ref = db.reference("sensor_data")
 
     ref.push({
@@ -126,6 +132,7 @@ def receive_data():
         "air": data["air"],
         "sound": data["sound"],
         "motion": data["motion"],
+        "movement": data["movement"],   # 🔥 NEW
         "score": round(score, 2)
     })
 
@@ -135,14 +142,12 @@ def receive_data():
         "buffer_size": len(buffer)
     })
 
-
 @app.route('/status', methods=['GET'])
 def status():
     return jsonify({
         "buffer_size": len(buffer),
         "message": "Backend running"
     })
-
 
 # -------- MAIN --------
 if __name__ == "__main__":
