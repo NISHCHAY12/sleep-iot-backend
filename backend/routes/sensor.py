@@ -1,0 +1,87 @@
+# backend/routes/sensor.py
+
+from flask import Blueprint, request, jsonify
+from services.logic import update_buffer, compute_average, compute_score, decide_action
+from services.state import system_state
+from config.firebase import get_ref
+
+sensor_bp = Blueprint("sensor", __name__)
+
+latest_data = {}
+
+
+@sensor_bp.route("/data", methods=["POST"])
+def receive_data():
+    global latest_data
+
+    if not system_state["power"]:
+        return jsonify({"status": "system_off"})
+
+    data = request.json
+    print("📥 Incoming data:", data)
+
+    required = ["temp", "humidity", "light", "air", "sound", "motion", "movement"]
+
+    for key in required:
+        if key not in data:
+            return jsonify({"error": f"Missing {key}"}), 400
+
+    update_buffer(data)
+
+    avg = compute_average()
+    score = compute_score(data, avg)
+
+    latest_data = data.copy()
+    latest_data["sleep_score"] = round(score, 2)
+
+    action = decide_action(
+        score,
+        data,
+        avg,
+        system_state["mode"],
+        system_state["feedback"]
+    )
+
+    # 🔥 WRITE TO FIREBASE
+    try:
+        ref = get_ref()
+        ref.push({
+            **latest_data,
+            "action": action,
+            "mode": system_state["mode"]
+        })
+        print("🔥 Firebase WRITE SUCCESS")
+
+    except Exception as e:
+        print("❌ Firebase ERROR:", e)
+
+    return jsonify({
+        "sleep_score": round(score, 2),
+        "action": action,
+        "mode": system_state["mode"],
+        "power": system_state["power"]
+    })
+
+
+# 🔥 FETCH FROM FIREBASE (IMPORTANT)
+@sensor_bp.route("/status", methods=["GET"])
+def status():
+    try:
+        ref = get_ref()
+
+        # Get last entry
+        data = ref.order_by_key().limit_to_last(1).get()
+
+        if data:
+            latest = list(data.values())[0]
+        else:
+            latest = {}
+
+        return jsonify({
+            **system_state,
+            **latest
+        })
+
+    except Exception as e:
+        print("❌ Firebase READ ERROR:", e)
+        return jsonify(system_state)

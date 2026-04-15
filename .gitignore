@@ -1,1 +1,5 @@
-firebase_key.json
+node_modules/
+frontend/node_modules/
+backend/config/firebase_key.json
+__pycache__/
+.env
