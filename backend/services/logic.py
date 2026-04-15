@@ -1,6 +1,6 @@
 # backend/services/logic.py
 
-from config.settings import settings
+from backend.config.settings import settings
 
 buffer = []
 

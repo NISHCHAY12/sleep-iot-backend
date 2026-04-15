@@ -2,8 +2,8 @@
 
 from flask import Flask
 from flask_cors import CORS
-from routes.sensor import sensor_bp
-from routes.control import control_bp
+from backend.routes.sensor import sensor_bp
+from backend.routes.control import control_bp
 
 app = Flask(__name__)
 CORS(app)

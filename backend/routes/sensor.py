@@ -1,9 +1,9 @@
 # backend/routes/sensor.py
 
 from flask import Blueprint, request, jsonify
-from services.logic import update_buffer, compute_average, compute_score, decide_action
-from services.state import system_state
-from config.firebase import get_ref
+from backend.services.logic import update_buffer, compute_average, compute_score, decide_action
+from backend.services.state import system_state
+from backend.config.firebase import get_ref
 
 sensor_bp = Blueprint("sensor", __name__)
 
