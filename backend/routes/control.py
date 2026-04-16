@@ -32,16 +32,23 @@ def set_mode(mode):
     })
 
 
-@control_bp.route("/feedback/<int:value>", methods=["POST"])
+@control_bp.route("/feedback/<value>", methods=["POST"])
 def feedback(value):
+    try:
+        value = int(value)
+    except:
+        return jsonify({"error": "Invalid number"}), 400
+
     if value < -5 or value > 5:
         return jsonify({"error": "Range -5 to 5"}), 400
 
     system_state["feedback"] = value
 
+    print("🎯 Feedback set to:", value)
+
     return jsonify({
         "status": "ok",
-        "feedback": system_state["feedback"]
+        "feedback": value
     })
 
 
