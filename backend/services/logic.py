@@ -1,19 +1,26 @@
-# backend/services/logic.py
-from backend.services.tuya_control import turn_on, turn_off, set_brightness
 from backend.config.settings import settings
 
+# 🔥 BUFFER FOR MOVING AVERAGE
 buffer = []
 
+
+# -------------------------------
+# 📥 STORE DATA
+# -------------------------------
 def update_buffer(data):
     buffer.append(data)
     if len(buffer) > settings.BUFFER_SIZE:
         buffer.pop(0)
 
+
+# -------------------------------
+# 📊 COMPUTE AVERAGE
+# -------------------------------
 def compute_average():
     if not buffer:
         return None
 
-    keys = ["temp","humidity","light","air","sound","motion","movement"]
+    keys = ["temp", "humidity", "light", "air", "sound", "motion", "movement"]
     avg = {k: 0 for k in keys}
 
     for d in buffer:
@@ -25,6 +32,10 @@ def compute_average():
 
     return avg
 
+
+# -------------------------------
+# 🧠 COMPUTE SLEEP SCORE
+# -------------------------------
 def compute_score(current, avg):
     if avg is None:
         return 100
@@ -43,41 +54,60 @@ def compute_score(current, avg):
 
     return max(score, 0)
 
+
+# -------------------------------
+# ⚙️ DECISION LOGIC
+# -------------------------------
 def decide_action(score, current, avg, mode, feedback):
+
     if avg is None:
         return {
-            "action": "NONE",
-            "brightness": 0,
-            "power": False
-        }
-
-    # 🔥 MANUAL MODE
-    if mode == "manual":
-        if feedback > 2:
-            return {
-                "action": "INCREASE_COMFORT",
-                "brightness": 800,
-                "power": True
-            }
-        elif feedback < -2:
-            return {
-                "action": "DECREASE_COMFORT",
-                "brightness": 200,
-                "power": True
-            }
-
-        return {
-            "action": "STABLE",
-            "brightness": 500,
+            "action": "INIT",
+            "brightness": 400,
             "power": True
         }
 
-    # 🔥 DYNAMIC MODE
-    dTemp = current["temp"] - avg["temp"]
-    dSound = current["sound"] - avg["sound"]
-    dMove = current["movement"] - avg["movement"]
+    # ---------------------------
+    # 🔧 MANUAL MODE
+    # ---------------------------
+    if mode == "manual":
+        brightness = 500 + feedback * 100
+        brightness = max(0, min(1000, brightness))
 
-    # 🌡️ Too hot → dim light + AC
+        return {
+            "action": "MANUAL",
+            "brightness": brightness,
+            "power": True
+        }
+
+    # ---------------------------
+    # 🔥 DYNAMIC MODE
+    # ---------------------------
+    dTemp  = current["temp"] - avg["temp"]
+    dSound = current["sound"] - avg["sound"]
+    dMove  = current["movement"] - avg["movement"]
+    light  = current["light"]
+
+    # ---------------------------
+    # 💡 LIGHT CONTROL (TOP PRIORITY)
+    # ---------------------------
+    if light > avg["light"] + 50:
+        return {
+            "action": "TOO_BRIGHT",
+            "brightness": 100,   # dim
+            "power": True
+        }
+
+    if light < avg["light"] - 40:
+        return {
+            "action": "TOO_DARK",
+            "brightness": 700,   # brighten
+            "power": True
+        }
+
+    # ---------------------------
+    # 🌡️ TEMPERATURE
+    # ---------------------------
     if score < 60 and dTemp > 1.5:
         return {
             "action": "AC_COOL",
@@ -85,31 +115,39 @@ def decide_action(score, current, avg, mode, feedback):
             "power": True
         }
 
-    # 🔊 Noise → very dim
-    elif score < 60 and dSound > 500:
+    # ---------------------------
+    # 🔊 NOISE
+    # ---------------------------
+    if score < 60 and dSound > 500:
         return {
             "action": "NOISE_ALERT",
             "brightness": 100,
             "power": True
         }
 
-    # 🧠 Restless → soft dim
-    elif score < 60 and dMove > 0.2:
+    # ---------------------------
+    # 🧠 MOVEMENT
+    # ---------------------------
+    if score < 60 and dMove > 0.2:
         return {
             "action": "RESTLESS_SLEEP",
-            "brightness": 150,
+            "brightness": 200,
             "power": True
         }
 
-    # 😴 Good sleep → turn OFF
-    elif score > 85:
+    # ---------------------------
+    # 😴 OPTIMAL SLEEP
+    # ---------------------------
+    if score > 85:
         return {
             "action": "SLEEP_OPTIMAL",
             "brightness": 0,
             "power": False
         }
 
-    # 🙂 Normal
+    # ---------------------------
+    # 🙂 DEFAULT
+    # ---------------------------
     return {
         "action": "STABLE",
         "brightness": 500,
