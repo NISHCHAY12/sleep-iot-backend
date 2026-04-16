@@ -11,7 +11,7 @@ from backend.services.state import system_state
 from backend.config.firebase import get_ref
 
 # 🔥 TUYA CONTROL
-from backend.services.tuya_control import set_brightness
+from backend.services.tuya_control import turn_off,turn_on,set_brightness
 
 sensor_bp = Blueprint("sensor", __name__)
 
