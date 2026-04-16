@@ -66,7 +66,14 @@ def decide_action(score, current, avg, mode, feedback):
     # 🔥 MANUAL MODE
     if mode == "manual":
         brightness = 500 + feedback * 100
-        brightness = max(0, min(1000, brightness))
+
+        if brightness <= 0:
+            return {
+                "action": "MANUAL_OFF",
+                "brightness": 0
+            }
+
+        brightness = min(1000, brightness)
 
         return {
             "action": "MANUAL",
