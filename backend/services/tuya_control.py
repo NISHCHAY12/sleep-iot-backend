@@ -11,57 +11,34 @@ ENDPOINT = "https://openapi.tuyain.com"
 DEVICE_ID = "d7d60bf49a939a90beu3xq"
 
 
-def generate_sign(payload, t, access_token=""):
-    payload_hash = hashlib.sha256(payload.encode()).hexdigest()
-
-    headers_dict = {
-        "access_token": access_token,
-        "client_id": ACCESS_ID,
-        "Content-Type": "application/json",
-        "sign_method": "HMAC-SHA256",
-        "t": t
-    }
-    headers_str = "\n".join(f"{k}:{v}" for k, v in sorted(headers_dict.items()))
-
-    string_to_sign = f"POST\n{payload_hash}\n{headers_str}\n/v1.0/devices/{DEVICE_ID}/commands"
-
-    sign_str = ACCESS_ID + access_token + t + string_to_sign
-
+def _hmac_sign(secret: str, message: str) -> str:
     return hmac.new(
-        ACCESS_SECRET.encode(),
-        sign_str.encode(),
+        secret.encode("utf-8"),
+        message.encode("utf-8"),
         hashlib.sha256
     ).hexdigest().upper()
 
 
 def get_token():
     t = str(int(time.time() * 1000))
-    headers_dict = {
-        "client_id": ACCESS_ID,
-        "sign_method": "HMAC-SHA256",
-        "t": t
-    }
-    headers_str = "\n".join(f"{k}:{v}" for k, v in sorted(headers_dict.items()))
-    string_to_sign = f"GET\n\n{headers_str}\n/v1.0/token?grant_type=1"
+    path = "/v1.0/token?grant_type=1"
+
+    # String-to-sign for GET with no body and no access_token
+    content_hash = hashlib.sha256(b"").hexdigest()
+    string_to_sign = f"GET\n{content_hash}\n\n{path}"
     sign_str = ACCESS_ID + t + string_to_sign
 
-    sign = hmac.new(
-        ACCESS_SECRET.encode(),
-        sign_str.encode(),
-        hashlib.sha256
-    ).hexdigest().upper()
+    sign = _hmac_sign(ACCESS_SECRET, sign_str)
 
     headers = {
         "client_id": ACCESS_ID,
         "sign": sign,
         "t": t,
-        "sign_method": "HMAC-SHA256"
+        "sign_method": "HMAC-SHA256",
     }
 
-    url = f"{ENDPOINT}/v1.0/token?grant_type=1"
-    res = requests.get(url, headers=headers).json()
-
-    print("🔑 TOKEN:", res)
+    res = requests.get(f"{ENDPOINT}{path}", headers=headers).json()
+    print("🔑 TOKEN RESPONSE:", res)
 
     if not res.get("success"):
         raise Exception(res)
@@ -72,10 +49,16 @@ def get_token():
 def send_command(commands):
     token = get_token()
     t = str(int(time.time() * 1000))
+    path = f"/v1.0/devices/{DEVICE_ID}/commands"
 
-    body = json.dumps({"commands": commands})
+    body = json.dumps({"commands": commands}, separators=(",", ":"))
 
-    sign = generate_sign(body, t, token)
+    # String-to-sign for POST with body and access_token
+    content_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()
+    string_to_sign = f"POST\n{content_hash}\n\n{path}"
+    sign_str = ACCESS_ID + token + t + string_to_sign
+
+    sign = _hmac_sign(ACCESS_SECRET, sign_str)
 
     headers = {
         "client_id": ACCESS_ID,
@@ -83,15 +66,11 @@ def send_command(commands):
         "sign": sign,
         "t": t,
         "sign_method": "HMAC-SHA256",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
     }
 
-    url = f"{ENDPOINT}/v1.0/devices/{DEVICE_ID}/commands"
-
-    res = requests.post(url, data=body, headers=headers).json()
-
+    res = requests.post(f"{ENDPOINT}{path}", data=body, headers=headers).json()
     print("💡 RESPONSE:", res)
-
     return res
 
 
