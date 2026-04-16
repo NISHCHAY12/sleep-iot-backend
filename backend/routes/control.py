@@ -1,5 +1,5 @@
-# backend/routes/control.py
 from backend.services.state import system_state
+from backend.services.tuya_control import turn_on, turn_off
 
 from flask import Blueprint, jsonify
 
@@ -11,6 +11,7 @@ def toggle():
     system_state["power"] = not system_state["power"]
     return jsonify(system_state)
 
+
 @control_bp.route("/mode/<mode>", methods=["POST"])
 def set_mode(mode):
     if mode not in ["manual", "dynamic"]:
@@ -19,6 +20,7 @@ def set_mode(mode):
     system_state["mode"] = mode
     return jsonify(system_state)
 
+
 @control_bp.route("/feedback/<int:value>", methods=["POST"])
 def feedback(value):
     if value < -5 or value > 5:
@@ -26,3 +28,15 @@ def feedback(value):
 
     system_state["feedback"] = value
     return jsonify(system_state)
+
+
+# 🔥 ADD THESE ROUTES
+
+@control_bp.route("/light/on", methods=["POST"])
+def light_on():
+    return jsonify(turn_on())
+
+
+@control_bp.route("/light/off", methods=["POST"])
+def light_off():
+    return jsonify(turn_off())
