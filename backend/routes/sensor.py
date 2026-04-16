@@ -1,11 +1,17 @@
 from flask import Blueprint, request, jsonify
 
-from backend.services.logic import update_buffer, compute_average, compute_score, decide_action
+from backend.services.logic import (
+    update_buffer,
+    compute_average,
+    compute_score,
+    decide_action
+)
+
 from backend.services.state import system_state
 from backend.config.firebase import get_ref
 
-# 🔥 ADD TUYA CONTROL
-from backend.services.tuya_control import turn_on, turn_off, set_brightness
+# 🔥 TUYA CONTROL
+from backend.services.tuya_control import set_brightness
 
 sensor_bp = Blueprint("sensor", __name__)
 
@@ -16,6 +22,7 @@ latest_data = {}
 def receive_data():
     global latest_data
 
+    # 🔒 SYSTEM POWER CHECK
     if not system_state["power"]:
         return jsonify({"status": "system_off"})
 
@@ -50,11 +57,13 @@ def receive_data():
     print("➡️ ACTION:", action)
 
     # -------------------------
-    # 🔥 TUYA CONTROL (IMPORTANT)
+    # 🔥 TUYA CONTROL
     # -------------------------
     try:
-        # 🔥 ONLY CONTROL BRIGHTNESS
-        set_brightness(action["brightness"])
+        brightness = max(10, int(action["brightness"]))  # ⚠️ prevent 0
+
+        print(f"💡 Setting brightness: {brightness}")
+        set_brightness(brightness)
 
     except Exception as e:
         print("❌ Tuya Control Error:", e)
@@ -68,7 +77,7 @@ def receive_data():
             **latest_data,
             "action": action["action"],
             "brightness": action["brightness"],
-            "power": action["power"],
+            "power": system_state["power"],   # ✅ FIXED
             "mode": system_state["mode"]
         })
         print("🔥 Firebase WRITE SUCCESS")
@@ -83,7 +92,7 @@ def receive_data():
         "sleep_score": round(score, 2),
         "action": action["action"],
         "brightness": action["brightness"],
-        "power": action["power"],
+        "power": system_state["power"],   # ✅ FIXED
         "mode": system_state["mode"]
     })
 
@@ -95,7 +104,6 @@ def receive_data():
 def status():
     try:
         ref = get_ref()
-
         data = ref.order_by_key().limit_to_last(1).get()
 
         if data:
@@ -104,8 +112,8 @@ def status():
             latest = {}
 
         return jsonify({
-            **system_state,
-            **latest
+            **latest,
+            **system_state   # ✅ OVERRIDE LAST
         })
 
     except Exception as e:
