@@ -11,16 +11,14 @@ ENDPOINT = "https://openapi.tuyain.com"
 DEVICE_ID = "d7d60bf49a939a90beu3xq"
 
 
-def get_token():
-    url = "/v1.0/token?grant_type=1"
-    t = str(int(time.time() * 1000))
+def generate_sign(client_id, t, secret):
+    sign_str = client_id + t
+    return hmac.new(secret.encode(), sign_str.encode(), hashlib.sha256).hexdigest().upper()
 
-    sign_str = ACCESS_ID + t
-    sign = hmac.new(
-        ACCESS_SECRET.encode(),
-        sign_str.encode(),
-        hashlib.sha256
-    ).hexdigest().upper()
+
+def get_token():
+    t = str(int(time.time() * 1000))
+    sign = generate_sign(ACCESS_ID, t, ACCESS_SECRET)
 
     headers = {
         "client_id": ACCESS_ID,
@@ -29,28 +27,27 @@ def get_token():
         "sign_method": "HMAC-SHA256"
     }
 
-    full_url = ENDPOINT + url
-    res = requests.get(full_url, headers=headers).json()
+    url = f"{ENDPOINT}/v1.0/token?grant_type=1"
+    res = requests.get(url, headers=headers).json()
 
     print("🔑 TOKEN RESPONSE:", res)
 
     if not res.get("success"):
-        raise Exception("Token fetch failed")
+        raise Exception(res)
 
     return res["result"]["access_token"]
 
 
 def send_command(commands):
     token = get_token()
-
-    url = f"/v1.0/devices/{DEVICE_ID}/commands"
     t = str(int(time.time() * 1000))
 
-    body = json.dumps({"commands": commands})
+    url_path = f"/v1.0/devices/{DEVICE_ID}/commands"
 
-    body_hash = hashlib.sha256(body.encode()).hexdigest()
+    # 🔥 IMPORTANT: EMPTY BODY HASH (official workaround)
+    body_hash = hashlib.sha256(b"").hexdigest()
 
-    sign_str = ACCESS_ID + token + t + "POST\n" + body_hash + "\n\n" + url
+    sign_str = ACCESS_ID + token + t + body_hash
 
     sign = hmac.new(
         ACCESS_SECRET.encode(),
@@ -67,8 +64,10 @@ def send_command(commands):
         "Content-Type": "application/json"
     }
 
-    full_url = ENDPOINT + url
-    res = requests.post(full_url, data=body, headers=headers).json()
+    url = ENDPOINT + url_path
+    body = {"commands": commands}
+
+    res = requests.post(url, json=body, headers=headers).json()
 
     print("💡 TUYA RESPONSE:", res)
 
