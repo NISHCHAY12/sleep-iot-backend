@@ -14,7 +14,16 @@ DEVICE_ID = "d7d60bf49a939a90beu3xq"
 def generate_sign(payload, t, access_token=""):
     payload_hash = hashlib.sha256(payload.encode()).hexdigest()
 
-    string_to_sign = f"POST\n{payload_hash}\nContent-Type:application/json\n/v1.0/devices/{DEVICE_ID}/commands"
+    headers_dict = {
+        "access_token": access_token,
+        "client_id": ACCESS_ID,
+        "Content-Type": "application/json",
+        "sign_method": "HMAC-SHA256",
+        "t": t
+    }
+    headers_str = "\n".join(f"{k}:{v}" for k, v in sorted(headers_dict.items()))
+
+    string_to_sign = f"POST\n{payload_hash}\n{headers_str}\n/v1.0/devices/{DEVICE_ID}/commands"
 
     sign_str = ACCESS_ID + access_token + t + string_to_sign
 
@@ -27,7 +36,14 @@ def generate_sign(payload, t, access_token=""):
 
 def get_token():
     t = str(int(time.time() * 1000))
-    sign_str = ACCESS_ID + t
+    headers_dict = {
+        "client_id": ACCESS_ID,
+        "sign_method": "HMAC-SHA256",
+        "t": t
+    }
+    headers_str = "\n".join(f"{k}:{v}" for k, v in sorted(headers_dict.items()))
+    string_to_sign = f"GET\n\n{headers_str}\n/v1.0/token?grant_type=1"
+    sign_str = ACCESS_ID + t + string_to_sign
 
     sign = hmac.new(
         ACCESS_SECRET.encode(),
