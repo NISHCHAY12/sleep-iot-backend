@@ -11,9 +11,11 @@ openapi.connect()
 
 
 def turn_on():
-    return openapi.post(f"/v1.0/devices/{DEVICE_ID}/commands", {
+    res = openapi.post(f"/v1.0/devices/{DEVICE_ID}/commands", {
         "commands": [{"code": "switch_led", "value": True}]
     })
+    print("TUYA RESPONSE:", res)
+    return res
 
 
 def turn_off():
