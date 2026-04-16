@@ -3,8 +3,9 @@ from tuya_iot import TuyaOpenAPI
 ACCESS_ID = "p7jfuhsa9akgqweh3sev"
 ACCESS_SECRET = "1c0066795102439587338992cd001f26"
 
-# 🔁 TRY BOTH IF NEEDED
+# 🔁 Try this first
 ENDPOINT = "https://openapi.tuyain.com"
+# If still fails → use:
 # ENDPOINT = "https://openapi.tuyaeu.com"
 
 DEVICE_ID = "d7d60bf49a939a90beu3xq"
@@ -12,50 +13,44 @@ DEVICE_ID = "d7d60bf49a939a90beu3xq"
 openapi = TuyaOpenAPI(ENDPOINT, ACCESS_ID, ACCESS_SECRET)
 
 
-def ensure_connection():
+def refresh_token():
     try:
-        if not openapi.token_info:
-            print("🔄 Connecting to Tuya...")
-            openapi.connect()
-            print("✅ Tuya Connected")
+        print("🔄 Refreshing Tuya token...")
+        openapi.connect()
+        print("✅ Token refreshed")
     except Exception as e:
-        print("❌ Tuya Connect Error:", e)
+        print("❌ Token refresh failed:", e)
+
+
+def send_command(commands):
+    refresh_token()   # 🔥 ALWAYS refresh before request
+
+    try:
+        res = openapi.post(f"/v1.0/devices/{DEVICE_ID}/commands", {
+            "commands": commands
+        })
+
+        print("📡 TUYA RESPONSE:", res)
+        return res
+
+    except Exception as e:
+        print("❌ TUYA ERROR:", e)
+        return {"error": str(e)}
 
 
 def turn_on():
-    ensure_connection()
-    try:
-        res = openapi.post(f"/v1.0/devices/{DEVICE_ID}/commands", {
-            "commands": [{"code": "switch_led", "value": True}]
-        })
-        print("💡 TURN ON:", res)
-        return res
-    except Exception as e:
-        print("❌ TURN ON ERROR:", e)
-        return {"error": str(e)}
+    return send_command([
+        {"code": "switch_led", "value": True}
+    ])
 
 
 def turn_off():
-    ensure_connection()
-    try:
-        res = openapi.post(f"/v1.0/devices/{DEVICE_ID}/commands", {
-            "commands": [{"code": "switch_led", "value": False}]
-        })
-        print("💡 TURN OFF:", res)
-        return res
-    except Exception as e:
-        print("❌ TURN OFF ERROR:", e)
-        return {"error": str(e)}
+    return send_command([
+        {"code": "switch_led", "value": False}
+    ])
 
 
 def set_brightness(value):
-    ensure_connection()
-    try:
-        res = openapi.post(f"/v1.0/devices/{DEVICE_ID}/commands", {
-            "commands": [{"code": "bright_value_v2", "value": int(value)}]
-        })
-        print("💡 BRIGHTNESS:", res)
-        return res
-    except Exception as e:
-        print("❌ BRIGHTNESS ERROR:", e)
-        return {"error": str(e)}
+    return send_command([
+        {"code": "bright_value_v2", "value": int(value)}
+    ])
