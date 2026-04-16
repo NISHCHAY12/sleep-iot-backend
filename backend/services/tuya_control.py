@@ -4,7 +4,7 @@ ACCESS_ID = "p7jfuhsa9akgqweh3sev"
 ACCESS_SECRET = "1c0066795102439587338992cd001f26"
 
 # 🔁 Try this first
-ENDPOINT = "https://openapi.tuyain.com"
+ENDPOINT = "https://openapi.tuyaeu.com"
 # If still fails → use:
 # ENDPOINT = "https://openapi.tuyaeu.com"
 
