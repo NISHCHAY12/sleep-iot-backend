@@ -2,20 +2,17 @@ import time
 import hmac
 import hashlib
 import requests
+import json
 
 ACCESS_ID = "vrr3esusx4kumgrjatpj"
 ACCESS_SECRET = "0d7f8327ff3c4b4987217227c7c6e733"
-
-# 🔁 Try this first
 ENDPOINT = "https://openapi.tuyain.com"
-# If still fails → use:
-# ENDPOINT = "https://openapi.tuyaeu.com"
 
 DEVICE_ID = "d7d60bf49a939a90beu3xq"
 
 
 def get_token():
-    url = f"{ENDPOINT}/v1.0/token?grant_type=1"
+    url = "/v1.0/token?grant_type=1"
     t = str(int(time.time() * 1000))
 
     sign_str = ACCESS_ID + t
@@ -32,8 +29,13 @@ def get_token():
         "sign_method": "HMAC-SHA256"
     }
 
-    res = requests.get(url, headers=headers).json()
+    full_url = ENDPOINT + url
+    res = requests.get(full_url, headers=headers).json()
+
     print("🔑 TOKEN RESPONSE:", res)
+
+    if not res.get("success"):
+        raise Exception("Token fetch failed")
 
     return res["result"]["access_token"]
 
@@ -41,14 +43,14 @@ def get_token():
 def send_command(commands):
     token = get_token()
 
-    url = f"{ENDPOINT}/v1.0/devices/{DEVICE_ID}/commands"
+    url = f"/v1.0/devices/{DEVICE_ID}/commands"
     t = str(int(time.time() * 1000))
 
-    body = {"commands": commands}
+    body = json.dumps({"commands": commands})
 
-    sign_str = ACCESS_ID + token + t + "POST\n" + hashlib.sha256(
-        str(body).encode()
-    ).hexdigest()
+    body_hash = hashlib.sha256(body.encode()).hexdigest()
+
+    sign_str = ACCESS_ID + token + t + "POST\n" + body_hash + "\n\n" + url
 
     sign = hmac.new(
         ACCESS_SECRET.encode(),
@@ -65,7 +67,9 @@ def send_command(commands):
         "Content-Type": "application/json"
     }
 
-    res = requests.post(url, json=body, headers=headers).json()
+    full_url = ENDPOINT + url
+    res = requests.post(full_url, data=body, headers=headers).json()
+
     print("💡 TUYA RESPONSE:", res)
 
     return res
