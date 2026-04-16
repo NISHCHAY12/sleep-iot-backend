@@ -66,7 +66,7 @@ def decide_action(score, current, avg, mode, feedback):
     # 🔥 MANUAL MODE
     if mode == "manual":
         brightness = 500 + feedback * 100
-        brightness = max(10, min(1000, brightness))
+        brightness = max(0, min(1000, brightness))
 
         return {
             "action": "MANUAL",
@@ -95,7 +95,7 @@ def decide_action(score, current, avg, mode, feedback):
     elif light < 20:
         return {
             "action": "TOO_DARK",
-            "brightness": 200   
+            "brightness": 300   
         }
 
     # 🌡️ TEMP
