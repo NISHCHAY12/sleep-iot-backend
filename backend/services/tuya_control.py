@@ -11,14 +11,19 @@ ENDPOINT = "https://openapi.tuyain.com"
 DEVICE_ID = "d7d60bf49a939a90beu3xq"
 
 
-def generate_sign(client_id, t, secret):
-    sign_str = client_id + t
-    return hmac.new(secret.encode(), sign_str.encode(), hashlib.sha256).hexdigest().upper()
+def sha256(data):
+    return hashlib.sha256(data.encode()).hexdigest()
 
 
 def get_token():
     t = str(int(time.time() * 1000))
-    sign = generate_sign(ACCESS_ID, t, ACCESS_SECRET)
+    sign_str = ACCESS_ID + t
+
+    sign = hmac.new(
+        ACCESS_SECRET.encode(),
+        sign_str.encode(),
+        hashlib.sha256
+    ).hexdigest().upper()
 
     headers = {
         "client_id": ACCESS_ID,
@@ -43,11 +48,20 @@ def send_command(commands):
     t = str(int(time.time() * 1000))
 
     url_path = f"/v1.0/devices/{DEVICE_ID}/commands"
+    method = "POST"
 
-    # 🔥 IMPORTANT: EMPTY BODY HASH (official workaround)
-    body_hash = hashlib.sha256(b"").hexdigest()
+    body = json.dumps({"commands": commands})
+    content_sha256 = sha256(body)
 
-    sign_str = ACCESS_ID + token + t + body_hash
+    # 🔥 EXACT STRING TO SIGN
+    string_to_sign = (
+        method + "\n" +
+        content_sha256 + "\n" +
+        "\n" +   # headers (empty)
+        url_path
+    )
+
+    sign_str = ACCESS_ID + token + t + string_to_sign
 
     sign = hmac.new(
         ACCESS_SECRET.encode(),
@@ -65,9 +79,7 @@ def send_command(commands):
     }
 
     url = ENDPOINT + url_path
-    body = {"commands": commands}
-
-    res = requests.post(url, json=body, headers=headers).json()
+    res = requests.post(url, data=body, headers=headers).json()
 
     print("💡 TUYA RESPONSE:", res)
 
