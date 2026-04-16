@@ -14,7 +14,7 @@ DEVICE_ID = "d7d60bf49a939a90beu3xq"
 def generate_sign(payload, t, access_token=""):
     payload_hash = hashlib.sha256(payload.encode()).hexdigest()
 
-    string_to_sign = f"POST\n{payload_hash}\n\n/v1.0/devices/{DEVICE_ID}/commands"
+    string_to_sign = f"POST\n{payload_hash}\nContent-Type:application/json\n/v1.0/devices/{DEVICE_ID}/commands"
 
     sign_str = ACCESS_ID + access_token + t + string_to_sign
 
