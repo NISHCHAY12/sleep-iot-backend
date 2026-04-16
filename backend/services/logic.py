@@ -63,8 +63,7 @@ def decide_action(score, current, avg, mode, feedback):
     if avg is None:
         return {
             "action": "INIT",
-            "brightness": 400,
-            "power": True
+            "brightness": 400
         }
 
     # ---------------------------
@@ -76,8 +75,7 @@ def decide_action(score, current, avg, mode, feedback):
 
         return {
             "action": "MANUAL",
-            "brightness": brightness,
-            "power": True
+            "brightness": brightness
         }
 
     # ---------------------------
@@ -88,68 +86,49 @@ def decide_action(score, current, avg, mode, feedback):
     dMove  = current["movement"] - avg["movement"]
     light  = current["light"]
 
-    # ---------------------------
-    # 💡 LIGHT CONTROL (TOP PRIORITY)
-    # ---------------------------
+    # 💡 LIGHT CONTROL
     if light > avg["light"] + 50:
         return {
             "action": "TOO_BRIGHT",
-            "brightness": 100,   # dim
-            "power": True
+            "brightness": 100
         }
 
     if light < avg["light"] - 40:
         return {
             "action": "TOO_DARK",
-            "brightness": 700,   # brighten
-            "power": True
+            "brightness": 700
         }
 
-    # ---------------------------
-    # 🌡️ TEMPERATURE
-    # ---------------------------
+    # 🌡️ TEMP
     if score < 60 and dTemp > 1.5:
         return {
             "action": "AC_COOL",
-            "brightness": 300,
-            "power": True
+            "brightness": 300
         }
 
-    # ---------------------------
     # 🔊 NOISE
-    # ---------------------------
     if score < 60 and dSound > 500:
         return {
             "action": "NOISE_ALERT",
-            "brightness": 100,
-            "power": True
+            "brightness": 100
         }
 
-    # ---------------------------
     # 🧠 MOVEMENT
-    # ---------------------------
     if score < 60 and dMove > 0.2:
         return {
             "action": "RESTLESS_SLEEP",
-            "brightness": 200,
-            "power": True
+            "brightness": 200
         }
 
-    # ---------------------------
-    # 😴 OPTIMAL SLEEP
-    # ---------------------------
+    # 😴 GOOD SLEEP
     if score > 85:
         return {
             "action": "SLEEP_OPTIMAL",
-            "brightness": 0,
-            "power": False
+            "brightness": 50   # dim instead of OFF
         }
 
-    # ---------------------------
-    # 🙂 DEFAULT
-    # ---------------------------
+    # DEFAULT
     return {
         "action": "STABLE",
-        "brightness": 500,
-        "power": True
+        "brightness": 500
     }
