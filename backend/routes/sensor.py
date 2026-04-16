@@ -46,21 +46,24 @@ def receive_data():
     try:
         ref = get_ref()
         ref.push({
-            **latest_data,
-            "action": action,
-            "mode": system_state["mode"]
-        })
+    **latest_data,
+    "action": action["action"],
+    "brightness": action["brightness"],
+    "power": action["power"],
+    "mode": system_state["mode"]
+})
         print("🔥 Firebase WRITE SUCCESS")
 
     except Exception as e:
         print("❌ Firebase ERROR:", e)
 
     return jsonify({
-        "sleep_score": round(score, 2),
-        "action": action,
-        "mode": system_state["mode"],
-        "power": system_state["power"]
-    })
+    "sleep_score": round(score, 2),
+    "action": action["action"],
+    "brightness": action["brightness"],
+    "power": action["power"],
+    "mode": system_state["mode"]
+})
 
 
 # 🔥 FETCH FROM FIREBASE (IMPORTANT)

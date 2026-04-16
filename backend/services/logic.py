@@ -45,47 +45,73 @@ def compute_score(current, avg):
 
 def decide_action(score, current, avg, mode, feedback):
     if avg is None:
-        return "NONE"
+        return {
+            "action": "NONE",
+            "brightness": 0,
+            "power": False
+        }
 
     # 🔥 MANUAL MODE
     if mode == "manual":
         if feedback > 2:
-            set_brightness(800)
-            turn_on()
-            return "INCREASE_COMFORT"
-
+            return {
+                "action": "INCREASE_COMFORT",
+                "brightness": 800,
+                "power": True
+            }
         elif feedback < -2:
-            set_brightness(200)
-            return "DECREASE_COMFORT"
+            return {
+                "action": "DECREASE_COMFORT",
+                "brightness": 200,
+                "power": True
+            }
 
-        return "STABLE"
+        return {
+            "action": "STABLE",
+            "brightness": 500,
+            "power": True
+        }
 
     # 🔥 DYNAMIC MODE
     dTemp = current["temp"] - avg["temp"]
     dSound = current["sound"] - avg["sound"]
     dMove = current["movement"] - avg["movement"]
 
-    # 🌡️ Temperature too high → AC / cooling logic
+    # 🌡️ Too hot → dim light + AC
     if score < 60 and dTemp > 1.5:
-        set_brightness(300)  # dim light for comfort
-        return "AC_COOL"
+        return {
+            "action": "AC_COOL",
+            "brightness": 300,
+            "power": True
+        }
 
-    # 🔊 Noise detected
+    # 🔊 Noise → very dim
     elif score < 60 and dSound > 500:
-        set_brightness(100)  # very dim
-        return "NOISE_ALERT"
+        return {
+            "action": "NOISE_ALERT",
+            "brightness": 100,
+            "power": True
+        }
 
-    # 🧠 Restless sleep
+    # 🧠 Restless → soft dim
     elif score < 60 and dMove > 0.2:
-        set_brightness(150)
-        return "RESTLESS_SLEEP"
+        return {
+            "action": "RESTLESS_SLEEP",
+            "brightness": 150,
+            "power": True
+        }
 
-    # 😴 Good sleep → turn off lights
+    # 😴 Good sleep → turn OFF
     elif score > 85:
-        turn_off()
-        return "SLEEP_OPTIMAL"
+        return {
+            "action": "SLEEP_OPTIMAL",
+            "brightness": 0,
+            "power": False
+        }
 
-    # 🙂 Normal case
-    set_brightness(500)
-    turn_on()
-    return "STABLE"
+    # 🙂 Normal
+    return {
+        "action": "STABLE",
+        "brightness": 500,
+        "power": True
+    }
