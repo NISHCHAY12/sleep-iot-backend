@@ -1,4 +1,5 @@
 from backend.config.settings import settings
+from backend.services.tuya_control import turn_off
 
 # 🔥 BUFFER FOR MOVING AVERAGE
 buffer = []
@@ -71,6 +72,7 @@ def decide_action(score, current, avg, mode, feedback):
 
         # 🔥 Turn OFF if too low
         if brightness <= 0:
+            turn_off()
             return {
                 "action": "MANUAL_OFF",
                 "brightness": 0
