@@ -63,10 +63,13 @@ def decide_action(score, current, avg, mode, feedback):
     if avg is None:
         return {"action": "NONE", "brightness": 500}
 
-    # 🔥 MANUAL MODE
+    # ======================================
+    # 🔥 MANUAL MODE (USER CONTROL)
+    # ======================================
     if mode == "manual":
-        brightness = 500 + feedback * 100
+        brightness = 500 + (feedback * 100)
 
+        # 🔥 Turn OFF if too low
         if brightness <= 0:
             return {
                 "action": "MANUAL_OFF",
@@ -80,44 +83,65 @@ def decide_action(score, current, avg, mode, feedback):
             "brightness": brightness
         }
 
+    # ======================================
     # 🔥 DYNAMIC MODE
+    # ======================================
     dTemp  = current["temp"] - avg["temp"]
     dSound = current["sound"] - avg["sound"]
     dMove  = current["movement"] - avg["movement"]
     light  = current["light"]
 
-    # 🔥 LIGHT CONTROL (THIS WAS MISSING EARLIER!)
-    if light > 200:
+    # ======================================
+    # 🚨 PRIORITY 1: SLEEP DISTURBANCES
+    # ======================================
+    if score < 60 and dSound > 500:
+        return {
+            "action": "NOISE_ALERT",
+            "brightness": 100
+        }
+
+    if score < 60 and dMove > 0.2:
+        return {
+            "action": "RESTLESS_SLEEP",
+            "brightness": 150
+        }
+
+    if score < 60 and dTemp > 1.5:
+        return {
+            "action": "AC_COOL",
+            "brightness": 300
+        }
+
+    # ======================================
+    # 🌞 PRIORITY 2: LIGHT CONTROL
+    # ======================================
+    if light > 250:
         return {
             "action": "TOO_BRIGHT",
-            "brightness": 0   # dim bulb
+            "brightness": 0   # turn OFF
         }
-    
-    elif light >= 20 and light <= 200:
+
+    elif light > 150:
         return {
-            "action": "Ideal_Light",
-            "brightness": 200-light   # dim bulb proportionally   
+            "action": "BRIGHT",
+            "brightness": 50
         }
-    
-    elif light < 20:
+
+    elif light > 50:
+        return {
+            "action": "NORMAL_LIGHT",
+            "brightness": 150
+        }
+
+    else:
         return {
             "action": "TOO_DARK",
-            "brightness": 300   
+            "brightness": 400
         }
 
-    # 🌡️ TEMP
-    if score < 60 and dTemp > 1.5:
-        return {"action": "AC_COOL", "brightness": 300}
-
-    # 🔊 SOUND
-    if score < 60 and dSound > 500:
-        return {"action": "NOISE_ALERT", "brightness": 100}
-
-    # 🧠 MOVEMENT
-    if score < 60 and dMove > 0.2:
-        return {"action": "RESTLESS_SLEEP", "brightness": 150}
-
-    # 😴 GOOD SLEEP
+    # ======================================
+    # 😴 DEFAULT FALLBACK
+    # ======================================
     return {
         "action": "SLEEP_OPTIMAL",
         "brightness": 50

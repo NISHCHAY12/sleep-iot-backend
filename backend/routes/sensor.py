@@ -60,19 +60,17 @@ def receive_data():
     # 🔥 TUYA CONTROL
     # -------------------------
     try:
-        try:
-            brightness = int(action["brightness"])
+        brightness = int(action["brightness"])
 
-            if brightness <= 0:
-                print("💡 Turning OFF bulb")
-                turn_off()
-            else:
-                print(f"💡 Setting brightness: {brightness}")
-                turn_on()
-                set_brightness(max(10, brightness))
+        if brightness <= 0:
+            print("💡 Turning OFF bulb")
+            turn_off()
+        else:
+            brightness = max(10, brightness)
 
-        except Exception as e:
-            print("❌ Tuya Control Error:", e)
+            print(f"💡 Setting brightness: {brightness}")
+            turn_on()
+            set_brightness(brightness)
 
     except Exception as e:
         print("❌ Tuya Control Error:", e)
