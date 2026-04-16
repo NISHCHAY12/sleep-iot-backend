@@ -1,3 +1,8 @@
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+from tuya_iot import TuyaOpenAPI
+
 from tuya_iot import TuyaOpenAPI
 
 ACCESS_ID = "YOUR_ACCESS_ID"
