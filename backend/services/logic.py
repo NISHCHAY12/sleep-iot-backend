@@ -1,5 +1,5 @@
 # backend/services/logic.py
-
+from backend.services.tuya_control import turn_on, turn_off, set_brightness
 from backend.config.settings import settings
 
 buffer = []
@@ -50,9 +50,14 @@ def decide_action(score, current, avg, mode, feedback):
     # 🔥 MANUAL MODE
     if mode == "manual":
         if feedback > 2:
+            set_brightness(800)
+            turn_on()
             return "INCREASE_COMFORT"
+
         elif feedback < -2:
+            set_brightness(200)
             return "DECREASE_COMFORT"
+
         return "STABLE"
 
     # 🔥 DYNAMIC MODE
@@ -60,11 +65,27 @@ def decide_action(score, current, avg, mode, feedback):
     dSound = current["sound"] - avg["sound"]
     dMove = current["movement"] - avg["movement"]
 
+    # 🌡️ Temperature too high → AC / cooling logic
     if score < 60 and dTemp > 1.5:
+        set_brightness(300)  # dim light for comfort
         return "AC_COOL"
+
+    # 🔊 Noise detected
     elif score < 60 and dSound > 500:
+        set_brightness(100)  # very dim
         return "NOISE_ALERT"
+
+    # 🧠 Restless sleep
     elif score < 60 and dMove > 0.2:
+        set_brightness(150)
         return "RESTLESS_SLEEP"
 
-    return "NONE"
+    # 😴 Good sleep → turn off lights
+    elif score > 85:
+        turn_off()
+        return "SLEEP_OPTIMAL"
+
+    # 🙂 Normal case
+    set_brightness(500)
+    turn_on()
+    return "STABLE"
