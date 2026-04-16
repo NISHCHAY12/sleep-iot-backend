@@ -1,10 +1,10 @@
 from tuya_iot import TuyaOpenAPI
 
-ACCESS_ID = "p7jfuhsa9akgqweh3sev"
-ACCESS_SECRET = "1c0066795102439587338992cd001f26"
+ACCESS_ID = "vrr3esusx4kumgrjatpj"
+ACCESS_SECRET = "0d7f8327ff3c4b4987217227c7c6e733"
 
 # 🔁 Try this first
-ENDPOINT = "https://openapi.tuyaeu.com"
+ENDPOINT = "https://openapi.tuyain.com"
 # If still fails → use:
 # ENDPOINT = "https://openapi.tuyaeu.com"
 
