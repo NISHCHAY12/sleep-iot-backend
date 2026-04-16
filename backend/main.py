@@ -1,5 +1,6 @@
 # backend/main.py
 
+import os
 from flask import Flask
 from flask_cors import CORS
 from backend.routes.sensor import sensor_bp
@@ -19,4 +20,8 @@ def home():
 
 if __name__ == "__main__":
     print("🚀 Starting backend server...")
-    app.run(host="0.0.0.0", port=10000)
+
+    # 🔥 IMPORTANT FIX
+    port = int(os.environ.get("PORT", 8080))
+
+    app.run(host="0.0.0.0", port=port)
