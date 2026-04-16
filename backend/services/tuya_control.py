@@ -19,9 +19,11 @@ def turn_on():
 
 
 def turn_off():
-    return openapi.post(f"/v1.0/devices/{DEVICE_ID}/commands", {
+    res = openapi.post(f"/v1.0/devices/{DEVICE_ID}/commands", {
         "commands": [{"code": "switch_led", "value": False}]
     })
+    print("🔥 TUYA OFF RESPONSE:", res)
+    return res
 
 
 def set_brightness(value):
