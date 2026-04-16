@@ -83,7 +83,19 @@ def decide_action(score, current, avg, mode, feedback):
     if light > 200:
         return {
             "action": "TOO_BRIGHT",
-            "brightness": 50   # dim bulb
+            "brightness": 5   # dim bulb
+        }
+    
+    if light > 20 and light < 200:
+        return {
+            "action": "Ideal_Light",
+            "brightness": 50   
+        }
+    
+    if light < 20:
+        return {
+            "action": "TOO_DARK",
+            "brightness": 500   
         }
 
     # 🌡️ TEMP
