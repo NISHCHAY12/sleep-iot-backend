@@ -1,9 +1,11 @@
-# backend/routes/sensor.py
-
 from flask import Blueprint, request, jsonify
+
 from backend.services.logic import update_buffer, compute_average, compute_score, decide_action
 from backend.services.state import system_state
 from backend.config.firebase import get_ref
+
+# 🔥 ADD TUYA CONTROL
+from backend.services.tuya_control import turn_on, turn_off, set_brightness
 
 sensor_bp = Blueprint("sensor", __name__)
 
@@ -26,6 +28,9 @@ def receive_data():
         if key not in data:
             return jsonify({"error": f"Missing {key}"}), 400
 
+    # -------------------------
+    # PROCESSING
+    # -------------------------
     update_buffer(data)
 
     avg = compute_average()
@@ -42,7 +47,26 @@ def receive_data():
         system_state["feedback"]
     )
 
-    # 🔥 WRITE TO FIREBASE
+    print("➡️ ACTION:", action)
+
+    # -------------------------
+    # 🔥 TUYA CONTROL (IMPORTANT)
+    # -------------------------
+    try:
+        if action["power"]:
+            turn_on()
+            set_brightness(action["brightness"])
+            print("💡 Bulb ON, brightness:", action["brightness"])
+        else:
+            turn_off()
+            print("💡 Bulb OFF")
+
+    except Exception as e:
+        print("❌ Tuya Control Error:", e)
+
+    # -------------------------
+    # FIREBASE STORE
+    # -------------------------
     try:
         ref = get_ref()
         ref.push({
@@ -57,22 +81,26 @@ def receive_data():
     except Exception as e:
         print("❌ Firebase ERROR:", e)
 
+    # -------------------------
+    # RESPONSE TO ESP
+    # -------------------------
     return jsonify({
-    "sleep_score": round(score, 2),
-    "action": action["action"],
-    "brightness": action["brightness"],
-    "power": action["power"],
-    "mode": system_state["mode"]
-})
+        "sleep_score": round(score, 2),
+        "action": action["action"],
+        "brightness": action["brightness"],
+        "power": action["power"],
+        "mode": system_state["mode"]
+    })
 
 
-# 🔥 FETCH FROM FIREBASE (IMPORTANT)
+# -------------------------
+# STATUS API
+# -------------------------
 @sensor_bp.route("/status", methods=["GET"])
 def status():
     try:
         ref = get_ref()
 
-        # Get last entry
         data = ref.order_by_key().limit_to_last(1).get()
 
         if data:
