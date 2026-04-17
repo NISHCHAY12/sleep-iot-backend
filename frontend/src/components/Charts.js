@@ -22,6 +22,10 @@ function Charts({ history }) {
         label: "Light",
         data: history.map((d) => d.light),
       },
+      {
+        label: "Sleep Score",
+        data: history.map((d) => d.sleep_score),
+      },
     ],
   };
 
