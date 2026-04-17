@@ -44,7 +44,7 @@ def feedback(value):
 
     system_state["feedback"] = value
 
-    print("🎯 Feedback set to:", value)
+    print(" Feedback set to:", value)
 
     return jsonify({
         "status": "ok",
