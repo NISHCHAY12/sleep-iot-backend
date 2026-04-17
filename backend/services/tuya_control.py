@@ -8,7 +8,7 @@ ACCESS_ID = "vrr3esusx4kumgrjatpj"
 ACCESS_SECRET = "0d7f8327ff3c4b4987217227c7c6e733"
 ENDPOINT = "https://openapi.tuyain.com"
 
-DEVICE_ID = "d7d60bf49a939a90beu3xq"
+DEVICE_ID = "d7d60bf49a939a90beu3x"
 
 
 def _hmac_sign(secret: str, message: str) -> str:
