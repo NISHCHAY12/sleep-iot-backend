@@ -29,12 +29,14 @@ function Charts({ history }) {
         label: "Temperature",
         data: history.map((d) => d.temp),
         borderWidth: 2,
+        borderColor: "red",  
         tension: 0.3,
       },
       {
         label: "Light",
         data: history.map((d) => d.light),
         borderWidth: 2,
+        borderColor: "white",  
         tension: 0.3,
       },
       {
@@ -42,6 +44,7 @@ function Charts({ history }) {
         data: history.map((d) => d.sleep_score),
         borderWidth: 4,           // 🔥 thicker line
         pointRadius: 3,
+        borderColor: "blue",  
         tension: 0.3,
       },
       {
@@ -49,6 +52,7 @@ function Charts({ history }) {
         data: history.map((d) => d.sound),
         borderWidth: 4,           // 🔥 thicker line
         pointRadius: 3,
+        borderColor: "green",  
         tension: 0.3,
       },
     ],
