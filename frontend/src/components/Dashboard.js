@@ -19,6 +19,8 @@ function Dashboard() {
             time: new Date().toLocaleTimeString(),
             temp: d.temp || 0,
             light: d.light || 0,
+            sleep_score: d.sleep_score || 0,
+            sound: d.sound || 0,
           },
         ]);
       });

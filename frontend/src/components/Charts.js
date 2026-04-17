@@ -38,8 +38,15 @@ function Charts({ history }) {
         tension: 0.3,
       },
       {
-        label: "Sleep Score ⭐",
-        data: history.map((d) => d.sleep_score ?? d.sleepScore ?? 0),
+        label: "Sleep Score",
+        data: history.map((d) => d.sleep_score),
+        borderWidth: 4,           // 🔥 thicker line
+        pointRadius: 3,
+        tension: 0.3,
+      },
+      {
+        label: "Sound",
+        data: history.map((d) => d.sound),
         borderWidth: 4,           // 🔥 thicker line
         pointRadius: 3,
         tension: 0.3,
@@ -67,7 +74,7 @@ function Charts({ history }) {
   };
 
   return (
-    <div className="card" style={{ height: "400px", padding: "20px" }}>
+    <div className="card" style={{ height: "400px", width: "100%", padding: "20px" }}>
       <h3 style={{ marginBottom: "10px" }}>📊 Sleep Analytics</h3>
 
       <div style={{ height: "300px" }}>
