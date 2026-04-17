@@ -37,7 +37,7 @@ function Charts({ history }) {
       },
       {
         label: "Sleep Score ⭐",
-        data: history.map((d) => d.sleep_score),
+        data: history.map((d) => d.sleep_score ?? d.sleepScore ?? 0),
         borderWidth: 4,           // 🔥 thicker line
         pointRadius: 3,
         tension: 0.3,
