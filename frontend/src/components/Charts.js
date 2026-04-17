@@ -20,7 +20,9 @@ ChartJS.register(
 );
 
 function Charts({ history }) {
+  console.log("HISTORY DATA:", history);
   const data = {
+    
     labels: history.map((d) => d.time || ""), // fallback if no time
     datasets: [
       {
