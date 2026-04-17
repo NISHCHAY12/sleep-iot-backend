@@ -6,34 +6,72 @@ import {
   CategoryScale,
   LinearScale,
   PointElement,
+  Legend,
+  Tooltip
 } from "chart.js";
 
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement);
+ChartJS.register(
+  LineElement,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  Legend,
+  Tooltip
+);
 
 function Charts({ history }) {
   const data = {
-    labels: history.map((d) => d.time),
+    labels: history.map((d) => d.time || ""), // fallback if no time
     datasets: [
       {
         label: "Temperature",
         data: history.map((d) => d.temp),
+        borderWidth: 2,
+        tension: 0.3,
       },
       {
         label: "Light",
         data: history.map((d) => d.light),
+        borderWidth: 2,
+        tension: 0.3,
       },
       {
-        label: "Sleep Score",
+        label: "Sleep Score ⭐",
         data: history.map((d) => d.sleep_score),
+        borderWidth: 4,           // 🔥 thicker line
+        pointRadius: 3,
+        tension: 0.3,
       },
     ],
   };
 
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false, // 🔥 allows custom height
+    plugins: {
+      legend: {
+        labels: {
+          font: {
+            size: 14,
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
+
   return (
-    <div className="card">
-      <h3>Live Graph</h3>
-      <Line data={data} />
-    </div> 
+    <div className="card" style={{ height: "400px", padding: "20px" }}>
+      <h3 style={{ marginBottom: "10px" }}>📊 Sleep Analytics</h3>
+
+      <div style={{ height: "300px" }}>
+        <Line data={data} options={options} />
+      </div>
+    </div>
   );
 }
 
